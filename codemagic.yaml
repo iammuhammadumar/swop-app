@@ -1,0 +1,73 @@
+workflows:
+  react-native-ios:
+    name: Build & Publish Swop (iOS)
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        - appstore_credentials
+      vars:
+        APP_NAME: "Swop"
+        XCODE_SCHEME: "$APP_NAME"
+        XCODE_WORKSPACE: "$APP_NAME.xcworkspace"
+        XCODE_PROJECT: "$APP_NAME.xcodeproj"
+      node: 16.11.1
+      xcode: 13.3
+      cocoapods: default
+    triggering:
+      events:
+        - push
+        - tag
+      branch_patterns:
+        - pattern: build/*
+          include: true
+      tag_patterns:
+        - pattern: ios-build
+          include: true
+      cancel_previous_builds: true
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          npm install
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios && pod install
+      - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
+        script: |
+          keychain initialize
+      - name: Fetch signing files, i.e. certificates, profiles, etc.
+        script: |
+          app-store-connect fetch-signing-files "$(xcode-project detect-bundle-id --project **/$XCODE_PROJECT)" --type IOS_APP_STORE --create
+      - name: Use system default keychain
+        script: |
+          keychain add-certificates
+      - name: Increment build number
+        script: |
+          #!/bin/sh
+          set -e
+          set -x
+          cd $CM_BUILD_DIR/ios
+          agvtool new-version -all $(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_APP_ID") + 1))
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles --warn-only
+      - name: Build ipa for distribution
+        script: |
+          xcode-project build-ipa --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      slack:
+        channel: '#build_swop'
+        notify_on_build_start: false
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true

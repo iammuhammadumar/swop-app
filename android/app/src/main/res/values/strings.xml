@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Swop</string>
+    <string name="facebook_app_id">@string/FACEBOOK_APP_ID_WITHOUT_PREFIX</string>
+    <string name="facebook_client_token">@string/FACEBOOK_CLIENT_TOKEN</string>
+</resources>

@@ -1,0 +1,1 @@
+export const CONTACTS_IN_COMPANY_PAGE_LIMIT = 15;

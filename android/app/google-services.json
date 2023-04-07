@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "207708818384",
+    "project_id": "swop-e4373",
+    "storage_bucket": "swop-e4373.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207708818384:android:27ed2df4edfb23802c47d5",
+        "android_client_info": {
+          "package_name": "com.swop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "207708818384-7ui8edqq6c50ru8nuoebu97s2qri28qs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.swop",
+            "certificate_hash": "c9369b2071fa27d1a6d89b3213e0f9988de1841d"
+          }
+        },
+        {
+          "client_id": "207708818384-2ree86u0jt31u8pohb87483r6j67rc0g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmsJvXpVVfBIfO_3fBpus9P1jEZZS3E2g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "207708818384-2ree86u0jt31u8pohb87483r6j67rc0g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "207708818384-9l3cvub3ung5j8dsj1s08ud60aava60s.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.appello.swop",
+                "app_store_id": "1617023438"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

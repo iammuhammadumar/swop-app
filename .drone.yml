@@ -1,0 +1,70 @@
+kind: pipeline
+name: Build Swop (android)
+
+definitions:
+  environment: &environment
+    image: yaroappello/mobile-ci:latest
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret_access_key
+      S3_BUCKET: appello-mobile-builds
+      SLACK_API_TOKEN:
+        from_secret: slack_token
+      SLACK_BUILD_CHANNEL_ID: C049KGML3DJ
+      SLACK_DEV_CHANNEL_ID: C03773GLAKF
+      PROJECT_NAME: Swop
+      ENV_NAME: dev
+  initialize_commands: &initialize_commands
+    commands:
+      - npx react-native init $PROJECT_NAME --skip-install --template git+https://bitbucket.org/appello/bp-react-native.git
+      - /bin/bash -c "shopt -s dotglob && mv $PROJECT_NAME/* ./ && rm -r $PROJECT_NAME" # Moving all files out of newly created folder
+      - git submodule update --init --recursive
+      - git add . && git commit -m 'Project init' && git push origin HEAD:dev && git push origin HEAD:stage && git push origin HEAD:main
+      - /notify_slack.py $SLACK_API_TOKEN $SLACK_DEV_CHANNEL_ID "✅ $PROJECT_NAME is successfully initialised. You can start development now"
+  build_commands: &build_android_commands
+    commands:
+      - git submodule update --init --recursive
+      - git submodule update --remote
+      - npm install --quiet
+      - npm run android:build-dev
+      - aws s3 sync ./android/app/build/outputs/apk/release s3://$S3_BUCKET/$ENV_NAME-${DRONE_COMMIT_SHA:0:8}
+      - /notify_slack.py $SLACK_API_TOKEN $SLACK_BUILD_CHANNEL_ID "✅ $PROJECT_NAME (Android) has been built\n*$ENV_NAME*, $DRONE_COMMIT_REF, ${DRONE_COMMIT_SHA:0:8}\n*$DRONE_COMMIT_AUTHOR* - $DRONE_COMMIT_MESSAGE\n<https://$S3_BUCKET.s3.amazonaws.com/$ENV_NAME-${DRONE_COMMIT_SHA:0:8}/$(cd ./android/app/build/outputs/apk/release && ls *.apk | head -n1)|Download build>\n<$DRONE_BUILD_LINK|See more>"
+  slack_commands: &error_slack_message_commands
+    commands:
+      - /notify_slack.py $SLACK_API_TOKEN $SLACK_BUILD_CHANNEL_ID "❌ Android app build failed!\n*$DRONE_COMMIT_REF*, ${DRONE_COMMIT_SHA:0:8}\n<$DRONE_BUILD_LINK|See more>"
+
+steps:
+  - name: Initialize project
+    <<: [*environment, *initialize_commands]
+    when:
+      event:
+        - tag
+      ref:
+        - refs/tags/init
+
+  - name: Build Dev Android (on branch)
+    <<: [*environment, *build_android_commands]
+    when:
+      branch:
+        - build/*
+      event:
+        - push
+
+  - name: Build Dev Android (on tag)
+    <<: [*environment, *build_android_commands]
+    when:
+      event:
+        - tag
+      ref:
+        - refs/tags/android-build
+
+  - name: Notify Slack about failure
+    <<: [*environment, *error_slack_message_commands]
+    when:
+      status:
+      - failure
+
+image_pull_secrets:
+- dockerconfigjson

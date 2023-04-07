@@ -1,0 +1,10 @@
+{
+  "name": "Swop",
+  "displayName": "Swop",
+  "ios": {
+    "infoPlist": {
+      "NSCameraUsageDescription": "Camera permission is needed for upload user avatar.",
+      "NSPhotoLibraryUsageDescription": "Camera permission is needed for upload user avatar."
+    }
+  }
+}
